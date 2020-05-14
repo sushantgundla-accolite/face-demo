@@ -143,8 +143,8 @@ export class FaceComponent implements OnInit {
     var myHeaders = new Headers();
     myHeaders.append(
       "x-api-key",
-      "hiWC2k43gPUYjnoYEqZ0dSvkPM6ZpbSYEj8y3zGApQ4="
-      // "Test"
+      // "hiWC2k43gPUYjnoYEqZ0dSvkPM6ZpbSYEj8y3zGApQ4="
+      "Test"
     );
 
     myHeaders.append("Content-Type", "application/json");
@@ -162,8 +162,8 @@ export class FaceComponent implements OnInit {
     };
 
     fetch(
-      "https://vision-uat.prudential.com.sg/api/face/image/distance/",
-      // "http://localhost:8000/api/face/image/distance/",
+      // "https://vision-uat.prudential.com.sg/api/face/image/distance/",
+      "http://localhost:8000/api/face/image/distance/",
       requestOptions
     )
       .then((response) => response.json())

@@ -31,11 +31,12 @@ import * as Record from "videojs-record/dist/videojs.record.js";
         margin: 0 auto;
       }
     </style>
-    <h1 style="text-align:center"> Blink and Iris Movement Detection!</h1>
+    <h1 style="text-align:center">Blink and Iris Movement Detection!</h1>
     <p style="text-align:center">
-    1. Click on the video Button to activate the Video Recorder. <br>
-    2. Click on the "Record" button (botton left of the video recorder) to start recording.<br>
-    3. Click on the "Stop" button to stop recording and get the Analysis.<br>
+      1. Click on the video Button to activate the Video Recorder. <br />
+      2. Click on the "Record" button (botton left of the video recorder) to
+      start recording.<br />
+      3. Click on the "Stop" button to stop recording and get the Analysis.<br />
     </p>
 
     <video
@@ -44,10 +45,10 @@ import * as Record from "videojs-record/dist/videojs.record.js";
       playsinline
     ></video>
 
-    
-
     <h3 *ngIf="blinks > -1" style="text-align:center">Blinks: {{ blinks }}</h3>
-    <h3 *ngIf="alive != null" style="text-align:center">Iris movement: {{ alive }}</h3>
+    <h3 *ngIf="alive != null" style="text-align:center">
+      Iris movement: {{ alive }}
+    </h3>
   `,
 })
 export class IrisComponent implements OnInit {
@@ -63,7 +64,6 @@ export class IrisComponent implements OnInit {
   private blinks: number = -1;
   private alive: boolean = null;
   private get: boolean = false;
-  private key: string = "hiWC2k43gPUYjnoYEqZ0dSvkPM6ZpbSYEj8y3zGApQ4=";
 
   // constructor initializes our declared vars
   constructor(elementRef: ElementRef, private http: HttpClient) {
@@ -154,7 +154,11 @@ export class IrisComponent implements OnInit {
       formdata.append("file", videofile, "video.mp4");
 
       var myHeaders = new Headers();
-      myHeaders.append("x-api-key", this.key);
+      myHeaders.append(
+        "x-api-key",
+        // "hiWC2k43gPUYjnoYEqZ0dSvkPM6ZpbSYEj8y3zGApQ4=",
+        "Test"
+      );
 
       var formdata = new FormData();
       formdata.append("file", videofile, "video.mp4");
@@ -165,17 +169,24 @@ export class IrisComponent implements OnInit {
         body: formdata,
         redirect: "follow",
       };
-
-      fetch("https://vision-uat.prudential.com.sg/api/face/iris/blink/", requestOptions)
+      
+      fetch(
+        // "https://vision-uat.prudential.com.sg/api/face/iris/blink/",
+        "http://localhost:8000/api/face/iris/blink/",
+        requestOptions
+      )
         .then((response) => response.json())
-        .then((result) => (this.blinks = result["body"]["blink_count"]))
+        .then((result) => {
+          this.blinks = result["body"]["blink"]["blink_count"];
+          this.alive = result["body"]["gaze"]["alive"];
+        })
         // .then((result) => console.log(result["body"]["total_frames"]))
         .catch((error) => console.log("error", error));
 
-      fetch("https://vision-uat.prudential.com.sg/api/face/iris/gaze/", requestOptions)
-        .then((response) => response.json())
-        .then((result) => (this.alive = result["body"]["alive"]))
-        .catch((error) => console.log("error", error));
+      // fetch("https://vision-uat.prudential.com.sg/api/face/iris/gaze/", requestOptions)
+      //   .then((response) => response.json())
+      //   .then((result) => (this.alive = result["body"]["alive"]))
+      //   .catch((error) => console.log("error", error));
 
       // const myHeaders = new  HttpHeaders().set("x-api-key", "Test");
 
@@ -234,7 +245,7 @@ export class IrisComponent implements OnInit {
   async getImage(event: any) {
     if (event.target.files && event.target.files[0]) {
       this.image = await this.toBase64(event.target.files[0]);
-      this.image = this.image.split('base64,')[1];
+      this.image = this.image.split("base64,")[1];
       console.log(this.image);
       // var reader = new FileReader();
       // reader.onload = (event: any) => {
@@ -245,12 +256,11 @@ export class IrisComponent implements OnInit {
     }
   }
 
-  toBase64 = file => new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = error => reject(error);
-});
-
-
+  toBase64 = (file) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
 }
