@@ -6,17 +6,6 @@ import videojs from "video.js";
 import * as adapter from "webrtc-adapter/out/adapter_no_global.js";
 import * as RecordRTC from "recordrtc";
 
-/*
-  // Required imports when recording audio-only using the videojs-wavesurfer plugin
-  import * as WaveSurfer from 'wavesurfer.js';
-  import * as MicrophonePlugin from 'wavesurfer.js/dist/plugin/wavesurfer.microphone.js';
-  WaveSurfer.microphone = MicrophonePlugin;
-  
-  // Register videojs-wavesurfer plugin
-  import * as Wavesurfer from 'videojs-wavesurfer/dist/videojs.wavesurfer.js';
-  */
-
-// register videojs-record plugin with this import
 import * as Record from "videojs-record/dist/videojs.record.js";
 
 @Component({
@@ -29,6 +18,11 @@ import * as Record from "videojs-record/dist/videojs.record.js";
       }
       .center {
         margin: 0 auto;
+      }    
+      .img{
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
       }
       .custom-file-upload {
         border: 1px solid #ccc;
@@ -43,6 +37,7 @@ import * as Record from "videojs-record/dist/videojs.record.js";
     2. Click on the video Button to activate the Video Recorder. <br>
     3. Click on the "Record" button (botton left of the video recorder) to start recording.<br>
     4. CLick on the "Stop" button to stop recording and get the Match.<br>
+    Note: Make sure that image and video MUST contain EXACT ONE PERSON(face).
     </p> 
 
     <label class="custom-file-upload">
@@ -56,7 +51,9 @@ import * as Record from "videojs-record/dist/videojs.record.js";
       playsinline
     ></video>
 
-    
+    <div *ngIf="send==true && distance < 0" class="center">
+    <img class="img" src="https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif">
+    </div>
     
     <h3 *ngIf="distance >= 0" style="text-align:center">Match:{{ distance }}%</h3>
   `,
@@ -73,6 +70,7 @@ export class VideoMatchComponent implements OnInit {
   private plugin: any;
   private distance: number = -1.1
   image: any;
+  private send:boolean = false;
 
   // constructor initializes our declared vars
   constructor(elementRef: ElementRef, private http: HttpClient) {
@@ -118,8 +116,6 @@ export class VideoMatchComponent implements OnInit {
 
   ngOnInit() {}
 
-  // use ngAfterViewInit to make sure we initialize the videojs element
-  // after the component template itself has been rendered
   ngAfterViewInit() {
     // ID with which to access the template's video element
     let el = "video_" + this.idx;
@@ -152,6 +148,7 @@ export class VideoMatchComponent implements OnInit {
 
     // user completed recording and stream is available
     this.player.on("finishRecord", () => {
+      this.send = true;
       // recordedData is a blob object containing the recorded data that
       // can be downloaded by the user, stored on server etc.
       console.log("finished recording: ", this.player.recordedData);
@@ -170,7 +167,7 @@ export class VideoMatchComponent implements OnInit {
 
       var formdata = new FormData();
       formdata.append("file", videofile, "video.mp4");
-      formdata.append("reference_image", this.image);
+      formdata.append("reference_image", this.image, this.image.name);
 
       var requestOptions: RequestInit = {
         method: "POST",
@@ -206,13 +203,6 @@ export class VideoMatchComponent implements OnInit {
       //   .subscribe((data) => console.log(data));
     });
 
-    //   this.player.on('finishRecord', function() {
-    //     // show save as dialog
-    //     console.log(this.player.recordedData);
-    //     // console.log(this.player.record());
-    //     // this.player.record().saveAs({'video': 'my-video-file-name.webm'});
-    // });
-
     // error handling
     this.player.on("error", (element, error) => {
       console.warn(error);
@@ -241,14 +231,9 @@ export class VideoMatchComponent implements OnInit {
   
   async getImage(event: any) {
     if (event.target.files && event.target.files[0]) {
-      this.image = await this.toBase64(event.target.files[0]);
-      this.image = this.image.split("base64,")[1];
-      // var reader = new FileReader();
-      // reader.onload = (event: any) => {
-      //   this.image = event.target.files[0];
-      //   reader.readAsDataURL(this.image);
-      //   console.log(reader.result);
-      // };
+      this.image = event.target.files[0];
+      // this.image = await this.toBase64(event.target.files[0]);
+      // this.image = this.image.split("base64,")[1];
     }
   }
 

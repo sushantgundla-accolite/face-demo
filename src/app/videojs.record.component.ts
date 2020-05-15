@@ -1,5 +1,4 @@
-import { Component, OnInit, OnDestroy, ElementRef } from "@angular/core";
-import { HttpClient, HttpHeaders } from "@angular/common/http";
+import { Component, OnInit} from "@angular/core";
 
 @Component({
   selector: "videojs-record",
@@ -46,22 +45,9 @@ import { HttpClient, HttpHeaders } from "@angular/common/http";
   `,
 })
 export class VideoJSRecordComponent implements OnInit {
-  // reference to the element itself: used to access events and methods
-  private _elementRef: ElementRef;
-
-  // index to create unique ID for component
-  idx = "clip1";
-
-  private config: any;
-  private player: any;
-  private plugin: any;
-  private blinks: number = -1;
-  private alive: boolean = null;
-  private get: boolean = false;
   private type: string = 'iris';
 
-  // constructor initializes our declared vars
-  constructor(elementRef: ElementRef, private http: HttpClient) { }
+  constructor() { }
 
   ngOnInit() {}
 

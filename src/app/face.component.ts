@@ -1,23 +1,6 @@
 import { Component, OnInit, OnDestroy, ElementRef } from "@angular/core";
-import { HttpClient, HttpHeaders } from "@angular/common/http";
 var FormData = require("form-data");
 
-import videojs from "video.js";
-import * as adapter from "webrtc-adapter/out/adapter_no_global.js";
-import * as RecordRTC from "recordrtc";
-
-/*
-  // Required imports when recording audio-only using the videojs-wavesurfer plugin
-  import * as WaveSurfer from 'wavesurfer.js';
-  import * as MicrophonePlugin from 'wavesurfer.js/dist/plugin/wavesurfer.microphone.js';
-  WaveSurfer.microphone = MicrophonePlugin;
-  
-  // Register videojs-wavesurfer plugin
-  import * as Wavesurfer from 'videojs-wavesurfer/dist/videojs.wavesurfer.js';
-  */
-
-// register videojs-record plugin with this import
-import * as Record from "videojs-record/dist/videojs.record.js";
 
 @Component({
   selector: "face",
@@ -29,6 +12,11 @@ import * as Record from "videojs-record/dist/videojs.record.js";
       }
       .center {
         margin: 0 auto;
+      }    
+      .img{
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
       }
       .button {
         background-color: #595;
@@ -53,6 +41,7 @@ import * as Record from "videojs-record/dist/videojs.record.js";
     <p style="text-align:center">
     1. Click on the Reference Images and set the Images. <br>
     2. Click on the "Calculate" to get the Match.<br>
+    Note: Make sure that both images MUST contain EXACT ONE PERSON(face).
     </p> 
     
     <label class="custom-file-upload">
@@ -68,9 +57,12 @@ import * as Record from "videojs-record/dist/videojs.record.js";
     </label>
     <br>
 
-    
-
     <button (click)="calculate()" class="button">Calculate</button>
+
+    <div *ngIf="send==true && distance < 0" class="center">
+    <img class="img" src="https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif">
+    </div>
+
     <h3 *ngIf="distance >= 0" style="text-align:center">Match:{{ distance }}%</h3>
   `,
 })
@@ -86,18 +78,16 @@ export class FaceComponent implements OnInit {
   private get: boolean = false;
   firstImage: any;
   secondImage: any;
+  private send: boolean = false;
 
   // constructor initializes our declared vars
-  constructor(elementRef: ElementRef, private http: HttpClient) {}
+  constructor(elementRef: ElementRef) {}
 
   ngOnInit() {}
 
-  // use ngAfterViewInit to make sure we initialize the videojs element
-  // after the component template itself has been rendered
   ngAfterViewInit() {}
   blobToFile = (theBlob: Blob, fileName: string): File => {
     var b: any = theBlob;
-    //A Blob() is almost a File() - it's just missing the two properties below which we will add
     b.lastModifiedDate = new Date();
     b.name = fileName;
 
@@ -107,27 +97,15 @@ export class FaceComponent implements OnInit {
 
   async getFirstImage(event: any) {
     if (event.target.files && event.target.files[0]) {
-      this.firstImage = await this.toBase64(event.target.files[0]);
-      this.firstImage = this.firstImage.split("base64,")[1];
-      // var reader = new FileReader();
-      // reader.onload = (event: any) => {
-      //   this.image = event.target.files[0];
-      //   reader.readAsDataURL(this.image);
-      //   console.log(reader.result);
-      // };
+      this.firstImage = event.target.files[0];
     }
   }
 
   async getSecondImage(event: any) {
     if (event.target.files && event.target.files[0]) {
-      this.secondImage = await this.toBase64(event.target.files[0]);
-      this.secondImage = this.secondImage.split("base64,")[1];
-      // var reader = new FileReader();
-      // reader.onload = (event: any) => {
-      //   this.image = event.target.files[0];
-      //   reader.readAsDataURL(this.image);
-      //   console.log(reader.result);
-      // };
+      this.secondImage = event.target.files[0];
+      // this.secondImage = await this.toBase64(event.target.files[0]);
+      // this.secondImage = this.secondImage.split("base64,")[1];
     }
   }
 
@@ -140,35 +118,32 @@ export class FaceComponent implements OnInit {
     });
 
   calculate() {
+    this.send = true;
     var myHeaders = new Headers();
     myHeaders.append(
       "x-api-key",
-      // "hiWC2k43gPUYjnoYEqZ0dSvkPM6ZpbSYEj8y3zGApQ4="
-      "Test"
+      "hiWC2k43gPUYjnoYEqZ0dSvkPM6ZpbSYEj8y3zGApQ4="
+      // "Test"
     );
-
-    myHeaders.append("Content-Type", "application/json");
-
-    var raw = JSON.stringify({
-      reference_image: this.firstImage,
-      example_image: this.secondImage,
-    });
+    
+    var formdata = new FormData();
+    formdata.append("reference_image", this.firstImage, this.firstImage.name);
+    formdata.append("example_image", this.secondImage, this.secondImage.name);
 
     var requestOptions: RequestInit = {
       method: "POST",
       headers: myHeaders,
-      body: raw,
+      body: formdata,
       redirect: "follow",
     };
 
     fetch(
-      // "https://vision-uat.prudential.com.sg/api/face/image/distance/",
-      "http://localhost:8000/api/face/image/distance/",
+      "https://vision-uat.prudential.com.sg/api/face/image/distance/",
+      // "http://localhost:8000/api/face/image/distance/",
       requestOptions
     )
       .then((response) => response.json())
-      .then((result) => (this.distance = +((1 - result["body"]["distance"])*100).toFixed(2)))
-      // .then((result) => console.log(result["body"]["total_frames"]))
+      .then((result) => (this.distance = +((1 - result["body"])*100).toFixed(2)))
       .catch((error) => console.log("error", error));
   }
 }

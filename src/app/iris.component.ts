@@ -29,7 +29,12 @@ import * as Record from "videojs-record/dist/videojs.record.js";
       }
       .center {
         margin: 0 auto;
-      }
+      }    
+    .img{
+      display: block;
+    margin-left: auto;
+    margin-right: auto;
+    }
     </style>
     <h1 style="text-align:center">Blink and Iris Movement Detection!</h1>
     <p style="text-align:center">
@@ -45,6 +50,10 @@ import * as Record from "videojs-record/dist/videojs.record.js";
       playsinline
     ></video>
 
+    <div *ngIf="send==true && (blinks < -1 || alive == null)" class="center">
+    <img class="img" src="https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif">
+    </div>
+
     <h3 *ngIf="blinks > -1" style="text-align:center">Blinks: {{ blinks }}</h3>
     <h3 *ngIf="alive != null" style="text-align:center">
       Iris movement: {{ alive }}
@@ -52,7 +61,6 @@ import * as Record from "videojs-record/dist/videojs.record.js";
   `,
 })
 export class IrisComponent implements OnInit {
-  // reference to the element itself: used to access events and methods
   private _elementRef: ElementRef;
 
   // index to create unique ID for component
@@ -64,12 +72,10 @@ export class IrisComponent implements OnInit {
   private blinks: number = -1;
   private alive: boolean = null;
   private get: boolean = false;
+  private send: boolean = false;
 
-  // constructor initializes our declared vars
   constructor(elementRef: ElementRef, private http: HttpClient) {
     this.player = false;
-
-    // save reference to plugin (so it initializes)
     this.plugin = Record;
 
     // video.js configuration
@@ -84,18 +90,6 @@ export class IrisComponent implements OnInit {
         volumePanel: false,
       },
       plugins: {
-        /*
-          // wavesurfer section is only needed when recording audio-only
-          wavesurfer: {
-              src: 'live',
-              waveColor: '#36393b',
-              progressColor: 'black',
-              debug: true,
-              cursorWidth: 1,
-              msDisplayMax: 20,
-              hideScrollbar: true
-          },
-          */
         // configure videojs-record plugin
         record: {
           videoMimeType: "video/webm;codecs=H264",
@@ -109,13 +103,9 @@ export class IrisComponent implements OnInit {
 
   ngOnInit() {}
 
-  // use ngAfterViewInit to make sure we initialize the videojs element
-  // after the component template itself has been rendered
   ngAfterViewInit() {
-    // ID with which to access the template's video element
     let el = "video_" + this.idx;
 
-    // setup the player via the unique element ID
     this.player = videojs(document.getElementById(el), this.config, () => {
       console.log("player ready! id:", el);
 
@@ -144,8 +134,7 @@ export class IrisComponent implements OnInit {
 
     // user completed recording and stream is available
     this.player.on("finishRecord", () => {
-      // recordedData is a blob object containing the recorded data that
-      // can be downloaded by the user, stored on server etc.
+      this.send = true;
       console.log("finished recording: ", this.player.recordedData);
       var blob = new Blob([this.player.recordedData], { type: "video/mp4" });
       let videofile = blobToFile(blob, "video.mp4");
@@ -156,8 +145,8 @@ export class IrisComponent implements OnInit {
       var myHeaders = new Headers();
       myHeaders.append(
         "x-api-key",
-        // "hiWC2k43gPUYjnoYEqZ0dSvkPM6ZpbSYEj8y3zGApQ4=",
-        "Test"
+        "hiWC2k43gPUYjnoYEqZ0dSvkPM6ZpbSYEj8y3zGApQ4=",
+        // "Test"
       );
 
       var formdata = new FormData();
@@ -171,8 +160,8 @@ export class IrisComponent implements OnInit {
       };
       
       fetch(
-        // "https://vision-uat.prudential.com.sg/api/face/iris/blink/",
-        "http://localhost:8000/api/face/iris/blink/",
+        "https://vision-uat.prudential.com.sg/api/face/iris/blink/",
+        // "http://localhost:8000/api/face/iris/blink/",
         requestOptions
       )
         .then((response) => response.json())
